@@ -1,11 +1,10 @@
 ﻿using BreathFX.Audio;
-using BreathFX.Breathing;
 using BreathFX.Hud;
-using UnityEngine;
 using EFT;
 using EFT.InventoryLogic;
+using UnityEngine;
 
-namespace BreathFX
+namespace BreathFX.Breathing
 {
     internal sealed class BreathingController : MonoBehaviour
     {
