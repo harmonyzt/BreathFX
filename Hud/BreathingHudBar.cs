@@ -1,4 +1,5 @@
-﻿using BreathFX.Breathing;
+﻿using System;
+using BreathFX.Breathing;
 using EFT;
 using EFT.UI;
 using UnityEngine;
@@ -10,7 +11,10 @@ namespace BreathFX.Hud
     {
         private const string BarObjectName = "BreathFX_Bar";
         private const float BarGap = -4f;
-        private static readonly Color FillColor = new Color(0.78f, 0.65f, 1f, 1f);
+        private static readonly Color DefaultFillColor = new Color(0.78f, 0.65f, 1f, 1f);
+
+        private static string _cachedColorHex;
+        private static Color _cachedColor = DefaultFillColor;
 
         private Player _player;
         private Image _fill;
@@ -104,7 +108,7 @@ namespace BreathFX.Hud
 
             ResolveNativeParts(reference, out RectTransform nativeBar, out Image nativeBackground,
                 out Image nativeFill);
-            _fillColor = FillColor;
+            _fillColor = ConfiguredFillColor();
             _exhaustedFillColor = nativeFill != null ? nativeFill.color : Color.white;
 
             ConfigureLayout(reference, nativeBar);
@@ -285,6 +289,8 @@ namespace BreathFX.Hud
                 return;
             }
 
+            _fillColor = ConfiguredFillColor();
+
             if (!BreathingManager.TryGet(_player, out BreathingController controller) || !controller.IsActive)
             {
                 SetFillSprite(_fillSprite);
@@ -294,10 +300,27 @@ namespace BreathFX.Hud
             }
 
             float breath = Mathf.Clamp01(controller.Breath);
-            bool exhausted = controller.IsGasping || breath <= 0.15f;
+            bool exhausted = controller.IsGasping
+                             || breath <= Mathf.Clamp01(Settings.ExhaustedBarThreshold.Value);
             SetFillSprite(exhausted && _exhaustedSprite != null ? _exhaustedSprite : _fillSprite);
             _fill.fillAmount = breath;
             _fill.color = exhausted ? _exhaustedFillColor : _fillColor;
+        }
+
+        private static Color ConfiguredFillColor()
+        {
+            string hex = Settings.BarColor.Value;
+            if (string.Equals(hex, _cachedColorHex, StringComparison.OrdinalIgnoreCase))
+            {
+                return _cachedColor;
+            }
+
+            _cachedColorHex = hex;
+            _cachedColor = !string.IsNullOrWhiteSpace(hex)
+                           && ColorUtility.TryParseHtmlString(hex.Trim(), out Color parsed)
+                ? parsed
+                : DefaultFillColor;
+            return _cachedColor;
         }
 
         private void SetFillSprite(Sprite sprite)

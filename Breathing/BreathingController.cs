@@ -8,10 +8,8 @@ namespace BreathFX.Breathing
 {
     internal sealed class BreathingController : MonoBehaviour
     {
-        private const float MinStartBreath = 0.15f;
         private const float LowStaminaDrainPenalty = 0.75f;
         private const float LowStaminaRecoveryPenalty = 0.65f;
-        private const float AudibleBreathThreshold = 0.35f;
 
         private Physical _physical;
         private Player _player;
@@ -32,7 +30,27 @@ namespace BreathFX.Breathing
         internal bool IsHolding { get; private set; }
         internal bool IsGasping { get; private set; }
         internal bool IsActive => Settings.Enabled.Value && isActiveAndEnabled && _physical != null && _player != null;
-        internal bool IsAudible => IsActive && !IsHolding && (IsGasping || Breath <= AudibleBreathThreshold);
+
+        // Mirror stamina exhaustion here as well
+        internal bool IsAudible => IsActive && !IsHolding
+                                            && (IsGasping || Breath <= AudibleBreathThreshold || StaminaExhausted);
+
+        private static float MinStartBreath => Mathf.Clamp01(Settings.MinStartBreath.Value);
+        private static float AudibleBreathThreshold => Mathf.Clamp01(Settings.AudibleBreathThreshold.Value);
+
+        private bool StaminaExhausted
+        {
+            get
+            {
+                if (_physical == null)
+                {
+                    return false;
+                }
+
+                return _physical.StaminaParameters.StaminaExhaustionStartsBreathSound
+                       && _physical.Stamina.Exhausted;
+            }
+        }
 
         internal void Initialize(Physical physical, Player player)
         {

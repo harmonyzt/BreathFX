@@ -22,4 +22,3 @@ namespace BreathFX.Patches
         }
     }
 }
-

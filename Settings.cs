@@ -9,6 +9,8 @@ namespace BreathFX
         internal static ConfigEntry<float> RecoverySeconds;
         internal static ConfigEntry<float> DepletedLockSeconds;
         internal static ConfigEntry<float> GaspSeconds;
+        internal static ConfigEntry<float> MinStartBreath;
+        internal static ConfigEntry<float> AudibleBreathThreshold;
         internal static ConfigEntry<bool> ReleaseOnSprint;
         internal static ConfigEntry<bool> AutoHoldOnScope;
         internal static ConfigEntry<bool> AutoHoldAssaultRifles;
@@ -16,11 +18,16 @@ namespace BreathFX
         internal static ConfigEntry<bool> AutoHoldBoltActions;
         internal static ConfigEntry<bool> ReplaceWeaponSway;
         internal static ConfigEntry<bool> ShowBreathingBar;
+        internal static ConfigEntry<string> BarColor;
+        internal static ConfigEntry<float> ExhaustedBarThreshold;
         internal static ConfigEntry<bool> ShowBreathVignette;
         internal static ConfigEntry<float> VignetteStrength;
         internal static ConfigEntry<float> VignetteRange;
+        internal static ConfigEntry<string> VignetteColor;
         internal static ConfigEntry<bool> EnableHeartbeat;
+        internal static ConfigEntry<float> HeartbeatStartBreath;
         internal static ConfigEntry<bool> EnableBreathSounds;
+        internal static ConfigEntry<float> BreathSoundVolume;
 
         internal static void Bind(ConfigFile config)
         {
@@ -43,6 +50,14 @@ namespace BreathFX
                 new ConfigDescription("How long the forced gasp and heavy sway last after running out of air.",
                     new AcceptableValueRange<float>(0f, 10f)));
 
+            MinStartBreath = config.Bind("Breathing", "Minimum Breath To Hold", 0.25f,
+                new ConfigDescription("How much breath is required before you can hold breath again.",
+                    new AcceptableValueRange<float>(0f, 1f)));
+
+            AudibleBreathThreshold = config.Bind("Breathing", "Audible Breath Threshold", 0.35f,
+                new ConfigDescription("Breath level at or below which the character starts breathing audibly. ",
+                    new AcceptableValueRange<float>(0f, 1f)));
+
             ReleaseOnSprint = config.Bind("Breathing", "Release While Sprinting", true,
                 "Automatically stop holding breath while sprinting. Not recommended to turn off, due this being more of a bug fix, rather the feature.");
 
@@ -64,6 +79,13 @@ namespace BreathFX
             ShowBreathingBar = config.Bind("HUD", "Show Breath Bar", true,
                 "Show the custom breathing bar next to the stance stamina bars.");
 
+            BarColor = config.Bind("HUD", "Bar Color", "#C7A6FF",
+                "Fill color of the breathing bar as a hex color (e.g. #C7A6FF).");
+
+            ExhaustedBarThreshold = config.Bind("HUD", "Exhausted Bar Threshold", 0.15f,
+                new ConfigDescription("Breath level at or below which the bar switches to the exhausted style.",
+                    new AcceptableValueRange<float>(0f, 1f)));
+
             ShowBreathVignette = config.Bind("HUD", "Show Breath Vignette", true,
                 "Darken the screen edges as held breath runs low.");
 
@@ -75,11 +97,23 @@ namespace BreathFX
                 new ConfigDescription("How far the vignette reaches toward the center of the screen.",
                     new AcceptableValueRange<float>(0f, 1f)));
 
+            VignetteColor = config.Bind("HUD", "Vignette Color", "#000000",
+                "Color of the breath vignette as HEX color (ie. #000000).");
+
             EnableHeartbeat = config.Bind("Audio", "Heartbeat Sound", true,
                 "Play a heartbeat that gets louder as held breath runs low.");
 
+            HeartbeatStartBreath = config.Bind("Audio", "Heartbeat Start Threshold", 0.75f,
+                new ConfigDescription("Breath level at which the heartbeat starts fading in. "
+                                      + "1 means when at full, lower values start it earlier.",
+                    new AcceptableValueRange<float>(0.01f, 1f)));
+
             EnableBreathSounds = config.Bind("Audio", "Inhale / Exhale Sounds", true,
                 "Play an inhale when you start holding breath and exhale when you release it.");
+
+            BreathSoundVolume = config.Bind("Audio", "Inhale / Exhale Volume", 0.3f,
+                new ConfigDescription("Volume of the inhale and exhale sounds.",
+                    new AcceptableValueRange<float>(0f, 1f)));
         }
     }
 }

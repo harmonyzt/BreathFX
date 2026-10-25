@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -14,6 +15,8 @@ namespace BreathFX.Hud
         private Sprite _sprite;
         private float _alpha;
         private float _appliedRange = -1f;
+        private string _appliedColorHex;
+        private Color _color = Color.black;
 
         internal void Initialize()
         {
@@ -52,13 +55,15 @@ namespace BreathFX.Hud
             rect.offsetMax = Vector2.zero;
 
             _appliedRange = Mathf.Clamp01(Settings.VignetteRange.Value);
-            _sprite = CreateVignetteSprite(_appliedRange);
+            _appliedColorHex = Settings.VignetteColor.Value;
+            _color = ConfiguredColor();
+            _sprite = CreateVignetteSprite(_appliedRange, _color);
             _image = imageObject.GetComponent<Image>();
             _image.sprite = _sprite;
             _image.type = Image.Type.Simple;
             _image.preserveAspect = false;
             _image.raycastTarget = false;
-            _image.color = new Color(0f, 0f, 0f, 0f);
+            _image.color = new Color(_color.r, _color.g, _color.b, 0f);
         }
 
         internal void Tick(bool holding, float breath)
@@ -101,15 +106,23 @@ namespace BreathFX.Hud
         private void EnsureSprite()
         {
             float range = Mathf.Clamp01(Settings.VignetteRange.Value);
-            if (_sprite != null && Mathf.Approximately(range, _appliedRange))
+            string hex = Settings.VignetteColor.Value;
+            if (_sprite != null
+                && Mathf.Approximately(range, _appliedRange)
+                && string.Equals(hex, _appliedColorHex, StringComparison.OrdinalIgnoreCase))
             {
                 return;
             }
 
+            _color = ConfiguredColor();
             Sprite previous = _sprite;
-            _sprite = CreateVignetteSprite(range);
+            _sprite = CreateVignetteSprite(range, _color);
             _appliedRange = range;
+            _appliedColorHex = hex;
             _image.sprite = _sprite;
+
+            Color imageColor = _image.color;
+            _image.color = new Color(_color.r, _color.g, _color.b, imageColor.a);
 
             if (previous != null)
             {
@@ -122,7 +135,16 @@ namespace BreathFX.Hud
             }
         }
 
-        private static Sprite CreateVignetteSprite(float range)
+        private static Color ConfiguredColor()
+        {
+            string hex = Settings.VignetteColor.Value;
+            return !string.IsNullOrWhiteSpace(hex)
+                   && ColorUtility.TryParseHtmlString(hex.Trim(), out Color parsed)
+                ? parsed
+                : Color.black;
+        }
+
+        private static Sprite CreateVignetteSprite(float range, Color color)
         {
             Texture2D texture = new Texture2D(TextureSize, TextureSize, TextureFormat.RGBA32, false)
             {
@@ -134,6 +156,9 @@ namespace BreathFX.Hud
 
             float inner = Mathf.Lerp(0.95f, 0.05f, range);
             float outer = Mathf.Lerp(0.95f, 1f, range);
+            byte red = (byte)Mathf.RoundToInt(Mathf.Clamp01(color.r) * 255f);
+            byte green = (byte)Mathf.RoundToInt(Mathf.Clamp01(color.g) * 255f);
+            byte blue = (byte)Mathf.RoundToInt(Mathf.Clamp01(color.b) * 255f);
 
             Color32[] pixels = new Color32[TextureSize * TextureSize];
             for (int y = 0; y < TextureSize; y++)
@@ -144,7 +169,7 @@ namespace BreathFX.Hud
                     float nx = (x + 0.5f) / TextureSize * 2f - 1f;
                     float radius = Mathf.Sqrt(nx * nx + ny * ny) / 1.41421356f;
                     float alpha = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(inner, outer, radius));
-                    pixels[y * TextureSize + x] = new Color32(0, 0, 0, (byte)Mathf.RoundToInt(alpha * 255f));
+                    pixels[y * TextureSize + x] = new Color32(red, green, blue, (byte)Mathf.RoundToInt(alpha * 255f));
                 }
             }
 

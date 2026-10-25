@@ -11,9 +11,7 @@ namespace BreathFX.Audio
 {
     internal sealed class BreathingAudio : MonoBehaviour
     {
-        private const float HeartbeatStartBreath = 0.75f;
         private const float HeartbeatFadeSpeed = 2f;
-        private const float BreathSoundVolume = 0.3f;
 
         private AudioSource _heartbeatSource;
         private AudioSource _breathSource;
@@ -112,7 +110,8 @@ namespace BreathFX.Audio
                 return;
             }
 
-            float intensity = Mathf.InverseLerp(HeartbeatStartBreath, 0f, Mathf.Clamp01(breath));
+            float startBreath = Mathf.Clamp(Settings.HeartbeatStartBreath.Value, 0.01f, 1f);
+            float intensity = Mathf.InverseLerp(startBreath, 0f, Mathf.Clamp01(breath));
             if (intensity <= 0.001f)
             {
                 FadeHeartbeatOut();
@@ -162,6 +161,7 @@ namespace BreathFX.Audio
                 return;
             }
 
+            float volume = Mathf.Clamp01(Settings.BreathSoundVolume.Value);
             bool viaBetterAudio = BetterAudio.Instantiated;
             if (viaBetterAudio)
             {
@@ -169,12 +169,12 @@ namespace BreathFX.Audio
                     clip,
                     BetterAudio.AudioSourceGroupType.Nonspatial,
                     0f,
-                    BreathSoundVolume,
+                    volume,
                     BetterAudio.Instance.VeryStandartMixerGroup);
             }
             else
             {
-                _breathSource.PlayOneShot(clip, BreathSoundVolume);
+                _breathSource.PlayOneShot(clip, volume);
             }
         }
 

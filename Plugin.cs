@@ -5,7 +5,7 @@ using HarmonyLib;
 
 namespace BreathFX
 {
-    [BepInPlugin(Guid, "BreathFX", "1.0.0")]
+    [BepInPlugin(Guid, "BreathFX", "1.0.1")]
     public class Plugin : BaseUnityPlugin
     {
         public const string Guid = "com.harmonyzt.BreathFX";
